@@ -101,10 +101,10 @@ DASHSCOPE_API_KEY=your_actual_api_key_here
 #### 主程序运行
 ```bash
 # 基本运行
-python main.py
+python text_pipeline/main.py
 
 # 或者使用Poetry
-poetry run python main.py
+poetry run python text_pipeline/main.py
 ```
 
 #### 示例程序运行
