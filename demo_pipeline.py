@@ -22,7 +22,7 @@ def create_analysis_pipeline() -> Runnable[Dict[str, str], Dict[str, Any]]:
     llm_manager = TongyiLLMManager()
 
     return (
-        RunnablePassthrough.assign(theory=TheoryExtractor())
-        | RunnablePassthrough.assign(tables=TableExtractor())
+        RunnablePassthrough.assign(theory=TheoryExtractor(llm_manager))
+        | RunnablePassthrough.assign(tables=TableExtractor(llm_manager))
         | RunnablePassthrough.assign(report=ReportGenerator(llm_manager))
     )

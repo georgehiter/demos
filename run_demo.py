@@ -78,9 +78,13 @@ def save_results_to_md(result: Dict[str, Any], filename: str):
             f.write("**内容**:\n\n")
 
             theory_content = result["theory"].get("content", {})
-            if isinstance(theory_content, dict) and "前20行内容" in theory_content:
-                for line in theory_content["前20行内容"]:
-                    f.write(f"{line}\n")
+            if isinstance(theory_content, dict):
+                # 只显示LLM总结
+                if "LLM总结" in theory_content:
+                    f.write("**LLM智能总结**:\n\n")
+                    f.write(f"{theory_content['LLM总结']}\n\n")
+                else:
+                    f.write("⚠️ 未生成LLM总结内容\n\n")
             else:
                 f.write(f"{theory_content}\n")
             f.write("\n")
@@ -97,8 +101,19 @@ def save_results_to_md(result: Dict[str, Any], filename: str):
             tables_content = result["tables"].get("content", [])
             for i, table in enumerate(tables_content, 1):
                 f.write(f"### 表格 {i}\n\n")
-                for row in table:
-                    f.write("| " + " | ".join(row) + " |\n")
+
+                # 检查是否是LLM格式化的表格
+                if isinstance(table, dict) and "LLM格式化表格" in table:
+                    f.write("**LLM格式化表格**:\n\n")
+                    f.write(f"{table['LLM格式化表格']}\n\n")
+                    f.write("**原始表格**:\n\n")
+                    # 显示原始表格
+                    for row in table["原始表格"]:
+                        f.write("| " + " | ".join(row) + " |\n")
+                else:
+                    # 显示普通表格
+                    for row in table:
+                        f.write("| " + " | ".join(row) + " |\n")
                 f.write("\n")
 
         if "report" in result:
