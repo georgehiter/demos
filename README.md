@@ -11,11 +11,12 @@
 ## 🎯 项目目标
 
 - 展示LCEL的核心设计理念和管道组合能力
-- 演示串行管道处理流程（理论提取 → 表格提取 → 报告生成）
+- 演示**并行处理管道**（理论提取 + 表格提取同时执行 → 报告生成）
 - 展示类型安全的管道构建和Runnable接口实现
 - 提供可运行的代码示例，支持真实LLM调用
-- 提供渐进式学习路径，从基础LLM调用到复杂LCEL管道
+- 提供渐进式学习路径，从基础LLM调用到复杂LCEL并行管道
 - 展示多种LLM集成方式，满足不同技术需求
+- 突出并行处理在提升性能和资源利用率方面的优势
 
 ## 🏗️ 架构设计
 
@@ -23,14 +24,31 @@
 
 1. **TongyiLLMManager** - 通义千问LLM管理器，提供真实的LLM调用
 2. **TheoryExtractor** - 理论框架提取器，提取文本中的理论内容
-3. **TableExtractor** - 表格数据提取器，解析Markdown表格
+3. **TableExtractor** - 表格数据提取器，解析Markdown表格，支持并行LLM处理
 4. **ReportGenerator** - 分析报告生成器，综合前序结果生成报告
 
-### LCEL管道
+### LCEL管道架构
+
+#### 并行处理管道（当前实现）
 
 ```python
-# 串行处理管道
-final_pipeline = (
+# 并行处理管道 - 理论提取和表格提取同时执行
+pipeline = RunnableParallel({
+    "theory": TheoryExtractor(llm_manager), 
+    "tables": TableExtractor(llm_manager)
+}) | RunnablePassthrough.assign(report=ReportGenerator(llm_manager))
+```
+
+**并行优势**：
+- 🚀 **性能提升**：理论提取和表格提取同时进行，减少总执行时间
+- 🔄 **资源利用**：充分利用多核CPU和并发能力
+- 📊 **效率优化**：适合处理大量文本和复杂表格数据
+
+#### 串行处理管道（可选实现）
+
+```python
+# 串行处理管道 - 顺序执行各组件
+serial_pipeline = (
     RunnableLambda(lambda x: {"content": x["content"]})
     | RunnablePassthrough.assign(theory=TheoryExtractor())
     | RunnablePassthrough.assign(tables=TableExtractor())
@@ -42,6 +60,11 @@ final_pipeline = (
     })
 )
 ```
+
+**串行优势**：
+- 🎯 **顺序依赖**：适合有明确依赖关系的处理流程
+- 🧠 **内存友好**：减少内存占用，适合资源受限环境
+- 🔍 **调试简单**：便于跟踪和调试处理流程
 
 ## 🚀 快速开始
 
@@ -155,11 +178,13 @@ utils/                       # 示例和教程目录
 
 [![Features](https://img.shields.io/badge/Features-Advanced-yellow.svg)](https://github.com/yourusername/text-pipeline)
 [![AI](https://img.shields.io/badge/AI-Powered-red.svg)](https://github.com/yourusername/text-pipeline)
+[![Parallel](https://img.shields.io/badge/Parallel-Processing-blue.svg)](https://github.com/yourusername/text-pipeline)
 
-### 1. 串行管道设计
-- 理论提取 → 表格提取 → 报告生成
-- 使用`RunnablePassthrough.assign`进行数据传递
-- 支持中间结果的累积和传递
+### 1. 并行处理架构 🚀
+- **并行执行**：理论提取和表格提取同时进行，提升处理效率
+- **智能调度**：使用`RunnableParallel`实现真正的并行处理
+- **资源优化**：充分利用多核CPU和并发能力
+- **混合模式**：并行提取 + 串行报告生成，平衡性能和依赖关系
 
 ### 2. 真实LLM集成
 - 集成通义千问3.5B模型
@@ -175,6 +200,12 @@ utils/                       # 示例和教程目录
 - 所有组件实现`Runnable`接口
 - 支持独立测试和重用
 - 清晰的职责分离
+
+### 5. 并行处理优势 📊
+- **性能提升**：理论提取和表格提取并行执行，减少总处理时间
+- **资源利用**：充分利用系统并发能力，提高CPU利用率
+- **扩展性**：支持添加更多并行组件，轻松扩展处理能力
+- **灵活性**：可根据需求选择并行或串行处理模式
 
 ## 📚 示例和教程
 
@@ -203,37 +234,43 @@ utils/                       # 示例和教程目录
    - 适合学习LangChain概念
 
 4. **完整管道** (`text_pipeline/`)
-   - 基于LCEL的智能分析管道
-   - 生产级别的架构设计
-   - 完整的理论提取和分析流程
+   - 基于LCEL的**并行处理**智能分析管道
+   - 生产级别的架构设计，支持并行执行
+   - 完整的理论提取和分析流程，性能优化
 
 ### 🔧 技术栈对比
 
-| 实现方式 | 复杂度 | 性能 | 灵活性 | 学习价值 |
-|---------|--------|------|--------|----------|
-| 简化调用器 | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ |
-| 原生API | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
-| 链式调用 | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| LCEL管道 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| 实现方式 | 复杂度 | 性能 | 灵活性 | 学习价值 | 并行能力 |
+|---------|--------|------|--------|----------|----------|
+| 简化调用器 | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ❌ |
+| 原生API | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ❌ |
+| 链式调用 | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ❌ |
+| LCEL串行管道 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ❌ |
+| **LCEL并行管道** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ |
 
 ## 🔍 代码示例
 
-### 使用完整管道
+### 使用并行处理管道
 
 ```python
 from pipeline import create_analysis_pipeline
 
-# 创建分析管道
+# 创建并行分析管道
 pipeline = create_analysis_pipeline()
 
-# 执行管道
+# 执行管道 - 理论提取和表格提取并行执行
 result = pipeline.invoke({"content": "您的文本内容"})
 
-# 获取结果
-theory = result["theory"]
-tables = result["tables"]
-report = result["report"]
+# 获取并行处理结果
+theory = result["theory"]      # 理论提取结果
+tables = result["tables"]      # 表格提取结果  
+report = result["report"]      # 基于并行结果生成的报告
 ```
+
+**并行执行流程**：
+1. 🚀 **并行阶段**：`TheoryExtractor` 和 `TableExtractor` 同时启动
+2. ⏳ **等待完成**：等待两个并行任务都完成
+3. 📝 **串行生成**：`ReportGenerator` 基于并行结果生成最终报告
 
 ### 使用单个组件
 
@@ -253,22 +290,40 @@ table_extractor = TableExtractor()
 table_result = table_extractor.invoke({"content": "表格数据"})
 ```
 
-### 自定义管道
+### 自定义并行管道
 
 ```python
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda, RunnableParallel
 
-# 创建自定义管道
-custom_pipeline = (
-    RunnablePassthrough.assign(
-        theory=TheoryExtractor(),
-        tables=TableExtractor()
-    )
+# 创建自定义并行管道
+custom_parallel_pipeline = (
+    RunnableParallel({
+        "theory": TheoryExtractor(),
+        "tables": TableExtractor(),
+        "custom_analysis": CustomAnalyzer()  # 可以添加更多并行组件
+    })
     | RunnableLambda(lambda x: {
-        "summary": f"理论: {x['theory']['content']}, 表格: {x['tables']['content']}"
+        "summary": f"理论: {x['theory']['content']}, 表格: {x['tables']['content']}, 分析: {x['custom_analysis']['content']}"
     })
 )
+
+# 创建混合管道（部分并行，部分串行）
+hybrid_pipeline = (
+    RunnableParallel({
+        "theory": TheoryExtractor(),
+        "tables": TableExtractor()
+    })
+    | RunnablePassthrough.assign(
+        summary=SummaryGenerator(),
+        report=ReportGenerator()
+    )
+)
 ```
+
+**并行管道设计模式**：
+- 🚀 **完全并行**：使用 `RunnableParallel` 同时执行多个独立任务
+- 🔄 **混合模式**：并行执行 + 串行后处理，平衡性能和依赖关系
+- 📈 **可扩展性**：轻松添加新的并行组件，提升处理能力
 
 ## 🧪 测试数据
 
@@ -297,9 +352,11 @@ with open("sample_data.md", "r", encoding="utf-8") as f:
 ## 📊 性能特点
 
 - **LLM调用**: 使用通义千问3.5B模型
-- **处理方式**: 串行顺序处理
-- **内存使用**: 轻量级设计
-- **执行流程**: 理论提取 → 表格提取 → 报告生成
+- **处理方式**: 并行 + 串行混合处理
+- **并行能力**: 理论提取和表格提取同时执行
+- **内存使用**: 轻量级设计，支持并发处理
+- **执行流程**: 并行提取 → 串行报告生成
+- **性能提升**: 相比串行处理，可显著减少总执行时间
 
 ## 🔧 技术细节
 
@@ -397,7 +454,7 @@ with open("sample_data.md", "r", encoding="utf-8") as f:
 1. 从 `utils/llm_tongyi.py` 开始，理解基本的LLM调用
 2. 尝试 `utils/llm_dashscope.py`，了解原生API的使用
 3. 学习 `utils/demo_pipeline.py`，掌握LangChain概念
-4. 最后深入 `text_pipeline/`，理解LCEL管道架构
+4. 最后深入 `text_pipeline/`，理解**LCEL并行管道架构**和性能优化策略
 
 ## 📄 许可证
 
@@ -405,4 +462,4 @@ with open("sample_data.md", "r", encoding="utf-8") as f:
 
 ---
 
-**注意**: 这是一个演示程序，展示了LCEL的核心特性和真实LLM集成，适合学习和理解LCEL概念。
+**注意**: 这是一个演示程序，展示了LCEL的**并行处理能力**和真实LLM集成，适合学习和理解LCEL并行管道架构概念。
