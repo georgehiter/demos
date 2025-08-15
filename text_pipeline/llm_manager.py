@@ -1,5 +1,5 @@
 """
-通义千问LLM管理器 - 真实的LLM调用实现
+智能文本分析LLM管理器 - 通义千问LLM调用实现
 
 基于langchain_community.llms.Tongyi，提供同步调用接口。
 """

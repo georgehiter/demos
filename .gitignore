@@ -42,4 +42,12 @@ poetry.lock
 .DS_Store
 Thumbs.db 
 
+# Cursor
 .cursor/
+
+# Cache directories
+.pytest_cache/
+
+# Results and output files (may contain sensitive data)
+results.md
+pipeline_results.md

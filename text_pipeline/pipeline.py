@@ -1,5 +1,5 @@
 """
-LCEL核心管道 - LangChain LCEL并行处理管道
+智能文本分析管道 - LangChain LCEL并行处理管道
 
 提供完整的分析管道，支持理论提取和表格提取并行执行，报告生成串行处理。
 """
@@ -11,8 +11,8 @@ from langchain_core.runnables import (
     RunnableParallel,
 )
 
-from tongyi_llm import TongyiLLMManager
-from lcel_components import TheoryExtractor, TableExtractor, ReportGenerator
+from llm_manager import TongyiLLMManager
+from components import TheoryExtractor, TableExtractor, ReportGenerator
 
 
 def create_analysis_pipeline() -> Runnable[Dict[str, str], Dict[str, Any]]:

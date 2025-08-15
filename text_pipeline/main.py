@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-LCEL演示程序主入口（简化版本）
+智能文本分析管道主入口
 
-展示LangChain LCEL核心特性的管道工作流程。
+基于LangChain LCEL的智能文本分析工具，支持理论提取、表格分析和报告生成。
 """
 
-from demo_pipeline import create_analysis_pipeline
+from pipeline import create_analysis_pipeline
 from datetime import datetime
 from typing import Dict, Any
 
@@ -35,7 +35,7 @@ def read_markdown_data(file_path="sample_data.md"):
 
 def main():
     """主程序入口"""
-    print("🚀 LCEL演示程序")
+    print("🚀 智能文本分析管道")
     print("=" * 40)
 
     # 从Markdown文档读取示例数据
@@ -54,9 +54,9 @@ def main():
     print(f"\n✅ 管道执行完成！")
 
     # 将管道结果保存到 Markdown 文档
-    save_results_to_md(result, "pipeline_results.md")
+    save_results_to_md(result, "results.md")
 
-    print("📄 结果已保存到 pipeline_results.md")
+    print("📄 结果已保存到 results.md")
 
 
 def save_results_to_md(result: Dict[str, Any], filename: str):

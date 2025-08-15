@@ -1,7 +1,7 @@
 [project]
-name = "demos"
-version = "0.1.0"
-description = ""
+name = "text-pipeline"
+version = "1.0.0"
+description = "智能文本分析管道 - 基于LangChain LCEL的文本分析工具"
 authors = [
     {name = "GeorgeHit",email = "noricerice@gmail.com"}
 ]
