@@ -7,15 +7,15 @@
 import os
 from dotenv import load_dotenv
 from langchain_community.llms import Tongyi
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import Runnable
 
 # 加载.env文件中的环境变量
 load_dotenv()
 
 
-class TongyiLLMManager:
+class TongyiLLMManager(Runnable):
     """
-    通义千问LLM管理器 - 真实的LLM调用实现
+    通义千问LLM管理器 - 真实的LLM调用实现，兼容LCEL管道
     """
 
     def __init__(self):
@@ -30,14 +30,14 @@ class TongyiLLMManager:
             temperature=0.2,
             max_tokens=2000,
         )
-        self.parser = StrOutputParser()
 
-    def invoke(self, prompt: str) -> str:
+    def invoke(self, prompt: str, config=None) -> str:
         """
         调用通义千问LLM
 
         Args:
             prompt: 输入提示词
+            config: 配置参数（LCEL标准参数）
 
         Returns:
             str: LLM响应结果
@@ -47,8 +47,8 @@ class TongyiLLMManager:
         """
         try:
             response = self.llm.invoke(prompt)
-            result = self.parser.parse(response)
-            return result
+            # 直接返回原始响应，让管道中的 StrOutputParser 处理
+            return response
         except Exception as e:
             print(f"❌ 通义千问LLM调用失败: {e}")
             raise

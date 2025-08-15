@@ -5,10 +5,13 @@
 """
 
 import re
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from dataclasses import dataclass
 
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableLambda
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 
 @dataclass
@@ -51,12 +54,13 @@ class TheoryExtractor(Runnable):
         content = inputs["content"]
         theory_data = self.extract_theory(content)
 
-        # 返回结构化的字典
+        # 返回统一结构的字典
         return {
             "type": "theory_framework",
             "content": theory_data,
-            "summary": f"提取了 {len(theory_data.get('前20行内容', []))} 行理论内容",
             "status": "success",
+            "summary": "理论框架提取完成",
+            "metadata": {"line_count": len(theory_data.get("前20行内容", []))},
         }
 
     def extract_theory(self, content: str) -> Dict[str, List[str]]:
@@ -73,7 +77,6 @@ class TheoryExtractor(Runnable):
             # 获取前20行内容
             lines = content.split("\n")
             first_20_lines = lines[:20]
-            truncated_content = "\n".join(first_20_lines)
 
             print(f"📝 [Theory] 使用前20行内容进行分析，共{len(first_20_lines)}行")
 
@@ -99,10 +102,9 @@ class TheoryExtractor(Runnable):
 
         return {"前20行内容": non_empty_lines}
 
-
-import re
-from typing import List, Dict, Any
-from langchain_core.runnables import Runnable
+    def get_default_framework(self) -> Dict[str, List[str]]:
+        """获取默认的理论框架"""
+        return {"前20行内容": []}
 
 
 class TableExtractor(Runnable):
@@ -174,13 +176,13 @@ class TableExtractor(Runnable):
         content = inputs["content"]
         tables_data = self.extract_tables(content)
 
-        # 返回结构化的字典
+        # 返回统一结构的字典
         return {
             "type": "table_data",
             "content": tables_data,
-            "count": len(tables_data),
-            "summary": f"提取了 {len(tables_data)} 个表格",
             "status": "success",
+            "summary": "表格提取完成",
+            "metadata": {"table_count": len(tables_data)},
         }
 
 
@@ -188,12 +190,44 @@ class ReportGenerator(Runnable):
     """
     报告生成器 - 实现Runnable接口
 
-    基于理论和表格数据生成分析报告，使用Mock LLM。
+    基于理论和表格数据生成分析报告，使用完全LCEL化的管道。
     """
 
     def __init__(self, llm_manager):
         """初始化报告生成器"""
         self.llm_manager = llm_manager
+
+        # 创建 PromptTemplate 提示词模板
+        self.prompt_template = PromptTemplate.from_template(
+            """你是一个专业的论文分析专家，擅长基于理论和数据生成分析报告。
+
+请基于以下信息生成一份详细的论文分析报告：
+
+## 理论框架
+{theory_content}
+
+## 表格数据
+{tables_content}
+
+请生成一份结构清晰、内容详实的分析报告，包括：
+1. 研究背景和目的
+2. 主要理论观点
+3. 数据分析和发现
+4. 结论和建议
+
+请使用Markdown格式，确保报告逻辑清晰、内容完整。"""
+        )
+
+        # 创建完整的 LCEL 管道
+        self.chain = (
+            RunnablePassthrough.assign(
+                theory_content=lambda x: x["theory"].get("content", "暂无理论框架数据"),
+                tables_content=lambda x: x["tables"].get("content", "暂无表格数据"),
+            )
+            | self.prompt_template
+            | self.llm_manager
+            | StrOutputParser()
+        )
 
     def invoke(self, inputs: Dict[str, Any], config: Any = None) -> Dict[str, Any]:
         """
@@ -217,35 +251,20 @@ class ReportGenerator(Runnable):
                 "content": "⚠️ 警告：理论框架和表格数据都为空，无法生成有意义的分析报告。",
                 "status": "warning",
                 "summary": "数据不足，无法生成报告",
+                "metadata": {},
             }
 
-        # 构建提示词
-        prompt = f"""
-请基于以下信息生成一份详细的论文分析报告：
+        # 使用 LCEL 管道生成报告
+        response = self.chain.invoke(inputs)
 
-## 理论框架
-{theory_framework.get('content', '暂无理论框架数据')}
-
-## 表格数据
-{tables.get('content', '暂无表格数据')}
-
-请生成一份结构清晰、内容详实的分析报告，包括：
-1. 研究背景和目的
-2. 主要理论观点
-3. 数据分析和发现
-4. 结论和建议
-
-请使用Markdown格式，确保报告逻辑清晰、内容完整。
-        """.strip()
-
-        # 同步调用通义千问LLM
-        response = self.llm_manager.invoke(prompt)
-
-        # 返回结构化的字典
+        # 返回统一结构的字典
         return {
             "type": "report",
-            "content": response.strip(),
+            "content": response,
             "status": "success",
-            "summary": f"生成了 {len(response.strip())} 字符的分析报告",
-            "word_count": len(response.strip().split()),
+            "summary": "报告生成完成",
+            "metadata": {
+                "word_count": len(response.split()),
+                "char_count": len(response),
+            },
         }
