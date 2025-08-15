@@ -79,13 +79,13 @@ serial_pipeline = (
 
 #### 使用Poetry（推荐）
 ```bash
-cd text_pipeline
+# 在项目根目录下
 poetry install
 ```
 
 #### 使用pip
 ```bash
-cd text_pipeline
+# 在项目根目录下
 pip install -r requirements.txt
 ```
 
@@ -133,14 +133,13 @@ poetry run python text_pipeline/main.py
 #### 示例程序运行
 ```bash
 # 基础LLM调用示例
-cd utils
-python llm_tongyi.py
+python utils/llm_tongyi.py
 
 # 原生API调用示例
-python llm_dashscope.py
+python utils/llm_dashscope.py
 
 # 链式调用示例
-python demo_pipeline.py
+python utils/demo_pipeline.py
 ```
 
 **注意**：运行示例程序前请确保已设置 `DASHSCOPE_API_KEY` 环境变量
@@ -151,28 +150,37 @@ python demo_pipeline.py
 [![Architecture](https://img.shields.io/badge/Architecture-Modular-blue.svg)](https://github.com/yourusername/text-pipeline)
 
 ```
-text_pipeline/                # 主包目录
-├── __init__.py              # 包初始化文件
-├── main.py                  # 主程序入口
-├── pipeline.py              # LCEL管道定义
-├── components.py            # 核心LCEL组件
-├── llm_manager.py           # 通义千问LLM管理器
-├── sample_data.md           # 示例数据
-├── results.md               # 结果输出
-└── README.md                # 本文档
-
-utils/                       # 示例和教程目录
-├── demo_pipeline.py         # LangChain链式调用示例
-├── llm_dashscope.py         # 原生DashScope API示例
-└── llm_tongyi.py            # 简化LLM调用器示例
-
-# 根目录
+demos/                       # 项目根目录
+├── text_pipeline/           # 主包目录
+│   ├── __init__.py         # 包初始化文件
+│   ├── main.py             # 主程序入口
+│   ├── pipeline.py         # LCEL并行管道定义
+│   ├── components.py       # 核心LCEL组件
+│   └── llm_manager.py      # 通义千问LLM管理器
+│
+├── utils/                   # 示例和教程目录
+│   ├── demo_pipeline.py    # LangChain链式调用示例
+│   ├── llm_dashscope.py    # 原生DashScope API示例
+│   └── llm_tongyi.py      # 简化LLM调用器示例
+│
+├── sample_data.md           # 示例数据文件
+├── results.md               # 结果输出文件
 ├── env.template             # 环境变量配置模板
 ├── pyproject.toml           # Poetry项目配置
+├── poetry.lock              # Poetry依赖锁定文件
 ├── requirements.txt          # pip依赖列表
+├── .python-version          # Python版本配置
 ├── LICENSE                  # MIT许可证文件
-└── .gitignore               # Git忽略文件
+├── .gitignore               # Git忽略文件
+└── README.md                # 本文档
 ```
+
+**目录说明**：
+- 📁 **`text_pipeline/`** - 核心LCEL并行管道实现
+- 📁 **`utils/`** - 学习示例和教程代码
+- 📄 **`sample_data.md`** - 预定义的测试数据
+- 📄 **`results.md`** - 管道执行结果示例
+- ⚙️ **配置文件** - Poetry、Python版本、环境变量等配置
 
 ## 🔧 核心特性
 
